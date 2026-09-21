@@ -102,6 +102,31 @@
   }
 
   /* ============================================================
+     💥 EXPLOSIÓN DE GIRASOLES AL ABRIR
+     ============================================================ */
+  .burst-field{
+    position:absolute; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:5;
+  }
+  .burst-flower{
+    position:absolute;
+    top:50%; left:50%;
+    transform: translate(-50%,-50%);
+    animation: burstFly .9s cubic-bezier(.16,.84,.44,1) forwards;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes burstFly{
+    0%   { transform: translate(-50%,-50%) translate(0,0) rotate(0deg) scale(.3); opacity:0; }
+    12%  { opacity:1; }
+    100% { transform: translate(-50%,-50%) translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(1); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .burst-flower{ animation:none; display:none; }
+  }
+
+  /* ============================================================
      ✉️ SOBRE
      ============================================================ */
   .envelope-wrap{
@@ -301,6 +326,7 @@
 <div class="stage" id="stage">
 
   <div class="petal-field" id="petalField" aria-hidden="true"></div>
+  <div class="burst-field" id="burstField" aria-hidden="true"></div>
   <div class="field" aria-hidden="true"></div>
 
   <div class="envelope-wrap">
@@ -351,7 +377,7 @@
    ✏️  EDITA AQUÍ TU MENSAJE — es lo único que necesitas cambiar
    ================================================================ */
 const CONTENT = {
-  title: "Para ti Korina.",
+  title: "Para ti Korina",
   paragraphs: [
     "Hoy quise hacer algo diferente para ti. No quería simplemente regalarte unas flores y ya, sino crear un pequeño rincón donde pudiera dejarte unas palabras que puedas leer y recordar cuando quieras. Gracias por cada momento, por cada sonrisa, por tu cariño y por formar parte de mi vida. Me gusta pensar en todo lo que hemos vivido juntos y también en todos esos momentos que todavía nos quedan por compartir.Hoy las flores son amarillas, pero mi deseo es que siempre haya motivos para llenar nuestros días de colores, sonrisas y momentos bonitos. Así que cuando veas estas flores, recuerda que detrás de este pequeño detalle hay alguien que te quiere muchísimo y que quiso tomarse el tiempo para crear algo especialmente para ti. Feliz día de las flores amarillas, mi amor. 💛🌻"
   ],
@@ -405,6 +431,47 @@ function buildPetals(){
 }
 buildPetals();
 
+/* Explosión de girasoles al abrir */
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function spawnBurst(){
+  if(prefersReducedMotion) return;
+  const field = document.getElementById('burstField');
+  const colors = ['#f5b700', '#e8a621', '#f7c548'];
+  const n = 16;
+  for(let i = 0; i < n; i++){
+    const angle = (Math.PI * 2 * i / n) + (Math.random() * 0.5 - 0.25);
+    const dist = 90 + Math.random() * 150;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    const rot = (Math.random() * 360 - 180) + 'deg';
+    const size = 26 + Math.random() * 20;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('viewBox', '0 0 40 40');
+    s.classList.add('burst-flower');
+    s.style.width = s.style.height = size + 'px';
+    s.style.setProperty('--dx', dx + 'px');
+    s.style.setProperty('--dy', dy + 'px');
+    s.style.setProperty('--rot', rot);
+    s.style.setProperty('--delay', (Math.random() * 0.12) + 's');
+    s.innerHTML =
+      '<g fill="' + color + '">' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(45 20 20)"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(90 20 20)"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(135 20 20)"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(180 20 20)"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(225 20 20)"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(270 20 20)"/>' +
+        '<ellipse cx="20" cy="6" rx="4.2" ry="7" transform="rotate(315 20 20)"/>' +
+      '</g>' +
+      '<circle cx="20" cy="20" r="6" fill="#6b4a1c"/>';
+    field.appendChild(s);
+    s.addEventListener('animationend', () => s.remove());
+  }
+}
+
 /* Abrir / cerrar */
 const stage = document.getElementById('stage');
 const envelopeBtn = document.getElementById('envelopeBtn');
@@ -412,6 +479,7 @@ const closeBtn = document.getElementById('closeBtn');
 
 envelopeBtn.addEventListener('click', () => {
   stage.classList.add('opened');
+  spawnBurst();
   setTimeout(() => document.getElementById('letterCard').focus?.(), 650);
 });
 closeBtn.addEventListener('click', () => {
@@ -427,3 +495,4 @@ document.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
