@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Una carta para ti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Literata:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+
+  /* ============================================================
+     🎨 TOKENS DE COLOR Y TIPOGRAFÍA
+     ============================================================ */
+  :root{
+    --sky-top:#fff6da;
+    --sky-mid:#ffe08a;
+    --sky-bottom:#f7b733;
+    --paper:#fffaf0;
+    --paper-shadow:rgba(120,90,20,0.25);
+    --ink:#4a3826;
+    --ink-soft:#7a5f42;
+    --gold:#e8a621;
+    --gold-deep:#c8860a;
+    --leaf:#7a9a4a;
+    --leaf-dark:#597235;
+    --accent-line:rgba(200,134,10,0.35);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --sky-top:#20180a;
+      --sky-mid:#4a3510;
+      --sky-bottom:#7a5410;
+      --paper:#fbf3df;
+      --ink:#3c2c1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --sky-top:#20180a;
+    --sky-mid:#4a3510;
+    --sky-bottom:#7a5410;
+    --paper:#fbf3df;
+    --ink:#3c2c1c;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0;
+    min-height:100%;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-bottom) 100%);
+    font-family: "Literata", Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-x:hidden;
+  }
+
+  /* ============================================================
+     🌼 ESCENARIO
+     ============================================================ */
+  .stage{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 2.5rem 1.25rem;
+    overflow:hidden;
+  }
+
+  .field{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:22vh;
+    min-height:120px;
+    background: linear-gradient(180deg, transparent 0%, var(--leaf) 60%, var(--leaf-dark) 100%);
+    clip-path: polygon(0 40%, 8% 30%, 18% 45%, 30% 25%, 42% 42%, 55% 22%, 68% 40%, 80% 28%, 92% 44%, 100% 32%, 100% 100%, 0 100%);
+    opacity:0.9;
+  }
+
+  .petal-field{
+    position:absolute; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .petal{
+    position:absolute;
+    top:-10%;
+    width: 22px; height:22px;
+    opacity:0.85;
+    animation: drift linear infinite;
+    will-change: transform;
+  }
+  @keyframes drift{
+    0%   { transform: translate3d(0,-10vh,0) rotate(0deg); }
+    100% { transform: translate3d(0,110vh,0) rotate(300deg); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .petal{ animation: none; opacity:0; }
+  }
+
+  /* ============================================================
+     ✉️ SOBRE
+     ============================================================ */
+  .envelope-wrap{
+    position:relative;
+    z-index:2;
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .stage.opened .envelope-wrap{
+    opacity:0;
+    transform: scale(.85) translateY(16px);
+    pointer-events:none;
+  }
+
+  .envelope{
+    appearance:none;
+    border:none;
+    background:none;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:1.1rem;
+    padding:0;
+    font-family:inherit;
+    color:inherit;
+  }
+
+  .envelope-body{
+    position:relative;
+    width:min(80vw, 300px);
+    aspect-ratio: 3 / 2;
+    background:
+      linear-gradient(180deg, #fffdf6 0%, var(--paper) 100%);
+    border-radius:10px;
+    box-shadow: 0 18px 34px -12px var(--paper-shadow), 0 2px 0 rgba(255,255,255,0.6) inset;
+  }
+  .envelope-body::before{
+    /* solapa inferior en V, textura del sobre */
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(135deg, transparent 49.3%, rgba(200,134,10,0.16) 49.3% 50.7%, transparent 50.7%),
+      linear-gradient(-135deg, transparent 49.3%, rgba(200,134,10,0.16) 49.3% 50.7%, transparent 50.7%);
+    border-radius:10px;
+  }
+  .envelope-flap{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:62%;
+    background: linear-gradient(160deg, #fdf0c8 0%, #f3d383 100%);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    border-radius:10px 10px 0 0;
+    transform-origin:top center;
+    transition: transform .7s cubic-bezier(.6,-0.2,.3,1.3);
+    box-shadow: 0 6px 10px -6px var(--paper-shadow);
+  }
+  .stage.opened .envelope-flap{
+    transform: rotateX(-165deg) translateY(-2px);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .envelope-flap{ transition: opacity .4s ease; }
+    .stage.opened .envelope-flap{ transform:none; opacity:0; }
+  }
+
+  .seal{
+    position:absolute;
+    top:52%; left:50%;
+    transform: translate(-50%,-50%);
+    width:52px; height:52px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #f4c04d, var(--gold-deep) 75%);
+    box-shadow: 0 4px 10px -3px rgba(120,80,10,0.5);
+    display:flex; align-items:center; justify-content:center;
+    z-index:2;
+  }
+  .seal svg{ width:26px; height:26px; }
+
+  .hint{
+    font-size:0.95rem;
+    letter-spacing:0.02em;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ============================================================
+     💌 CARTA
+     ============================================================ */
+  .letter-wrap{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 2.25rem 1.1rem;
+    opacity:0;
+    transform: scale(.92) translateY(10px);
+    pointer-events:none;
+    transition: opacity .6s ease .1s, transform .6s ease .1s;
+  }
+  .stage.opened .letter-wrap{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+  }
+
+  .letter{
+    position:relative;
+    width:min(92vw, 540px);
+    max-height: min(82vh, 720px);
+    overflow-y:auto;
+    background: var(--paper);
+    border-radius:14px;
+    padding: 2.6rem 2.1rem 2.2rem;
+    box-shadow: 0 30px 60px -20px rgba(90,60,10,0.45);
+  }
+  .letter::-webkit-scrollbar{ width:8px; }
+  .letter::-webkit-scrollbar-thumb{ background: var(--accent-line); border-radius:8px; }
+
+  .letter-close{
+    position:sticky;
+    top:0; float:right;
+    margin-left: 0.75rem;
+    width:34px; height:34px;
+    border-radius:50%;
+    border:1px solid var(--accent-line);
+    background: var(--paper);
+    color: var(--ink-soft);
+    font-size:1.1rem;
+    line-height:1;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .letter-close:hover{ background:#f6e9c6; }
+
+  .letter-flowers{
+    display:flex;
+    gap:0.5rem;
+    margin-bottom:0.4rem;
+  }
+  .letter-flowers svg{ width:22px; height:22px; }
+
+  .letter-title{
+    font-family:"Caveat", "Segoe Script", cursive;
+    font-weight:700;
+    font-size: clamp(2.1rem, 6vw, 2.7rem);
+    color: var(--gold-deep);
+    margin: 0 0 0.3rem;
+    line-height:1;
+  }
+
+  .letter-divider{
+    width:54px; height:3px;
+    background: var(--gold);
+    border-radius:2px;
+    margin: 0.4rem 0 1.3rem;
+  }
+
+  .letter-body p{
+    font-size: clamp(1rem, 2.4vw, 1.12rem);
+    line-height:1.75;
+    color: var(--ink);
+    margin: 0 0 1.05em;
+    max-width: 58ch;
+  }
+
+  .letter-signature{
+    margin-top: 1.6rem;
+    text-align:right;
+  }
+  .letter-signature .line1{
+    font-size:1rem;
+    color: var(--ink-soft);
+    margin:0 0 0.15rem;
+  }
+  .letter-signature .name{
+    font-family:"Caveat", cursive;
+    font-weight:700;
+    font-size: clamp(1.7rem, 5vw, 2.1rem);
+    color: var(--gold-deep);
+  }
+  .letter-date{
+    margin-top:0.6rem;
+    font-size:0.85rem;
+    color: var(--ink-soft);
+    text-align:right;
+    font-style:italic;
+  }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <div class="petal-field" id="petalField" aria-hidden="true"></div>
+  <div class="field" aria-hidden="true"></div>
+
+  <div class="envelope-wrap">
+    <button class="envelope" id="envelopeBtn" aria-label="Abrir la carta">
+      <span class="envelope-body">
+        <span class="envelope-flap"></span>
+        <span class="seal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <g fill="#fff6da">
+              <ellipse cx="12" cy="5.5" rx="3.1" ry="4.2"/>
+              <ellipse cx="12" cy="18.5" rx="3.1" ry="4.2"/>
+              <ellipse cx="5.5" cy="12" rx="4.2" ry="3.1"/>
+              <ellipse cx="18.5" cy="12" rx="4.2" ry="3.1"/>
+            </g>
+            <circle cx="12" cy="12" r="2.6" fill="#c8860a"/>
+          </svg>
+        </span>
+      </span>
+      <span class="hint">Toca para abrir</span>
+    </button>
+  </div>
+
+  <div class="letter-wrap">
+    <div class="letter" id="letterCard" role="dialog" aria-modal="true" aria-labelledby="letterTitle">
+      <button class="letter-close" id="closeBtn" aria-label="Cerrar carta">×</button>
+
+      <div class="letter-flowers" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><g fill="#e8a621"><ellipse cx="12" cy="5.5" rx="3" ry="4"/><ellipse cx="12" cy="18.5" rx="3" ry="4"/><ellipse cx="5.5" cy="12" rx="4" ry="3"/><ellipse cx="18.5" cy="12" rx="4" ry="3"/></g><circle cx="12" cy="12" r="2.4" fill="#7a5f10"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><g fill="#e8a621"><ellipse cx="12" cy="5.5" rx="3" ry="4"/><ellipse cx="12" cy="18.5" rx="3" ry="4"/><ellipse cx="5.5" cy="12" rx="4" ry="3"/><ellipse cx="18.5" cy="12" rx="4" ry="3"/></g><circle cx="12" cy="12" r="2.4" fill="#7a5f10"/></svg>
+      </div>
+
+      <h1 class="letter-title" id="letterTitle"></h1>
+      <div class="letter-divider"></div>
+      <div class="letter-body" id="letterBody"></div>
+
+      <div class="letter-signature">
+        <p class="line1" id="sigLine"></p>
+        <p class="name" id="sigName"></p>
+      </div>
+      <p class="letter-date" id="letterDate"></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================================================================
+   ✏️  EDITA AQUÍ TU MENSAJE — es lo único que necesitas cambiar
+   ================================================================ */
+const CONTENT = {
+  title: "Para ti Korina.",
+  paragraphs: [
+    "Hoy quise hacer algo diferente para ti. No quería simplemente regalarte unas flores y ya, sino crear un pequeño rincón donde pudiera dejarte unas palabras que puedas leer y recordar cuando quieras. Gracias por cada momento, por cada sonrisa, por tu cariño y por formar parte de mi vida. Me gusta pensar en todo lo que hemos vivido juntos y también en todos esos momentos que todavía nos quedan por compartir.Hoy las flores son amarillas, pero mi deseo es que siempre haya motivos para llenar nuestros días de colores, sonrisas y momentos bonitos. Así que cuando veas estas flores, recuerda que detrás de este pequeño detalle hay alguien que te quiere muchísimo y que quiso tomarse el tiempo para crear algo especialmente para ti. Feliz día de las flores amarillas, mi amor. 💛🌻"
+  ],
+  firma1: "Con cariño,",
+  firmaNombre: "Carlos.R",
+  fecha: "" // deja vacío para usar la fecha de hoy, o escribe una fija, ej: "11 de marzo"
+};
+/* ================================================================
+   Fin de la zona editable. Debajo es lógica, no hace falta tocarla.
+   ================================================================ */
+
+function renderLetter(){
+  document.getElementById('letterTitle').textContent = CONTENT.title;
+  const body = document.getElementById('letterBody');
+  body.innerHTML = '';
+  CONTENT.paragraphs.forEach(txt => {
+    const p = document.createElement('p');
+    p.textContent = txt;
+    body.appendChild(p);
+  });
+  document.getElementById('sigLine').textContent = CONTENT.firma1;
+  document.getElementById('sigName').textContent = CONTENT.firmaNombre;
+
+  let fecha = CONTENT.fecha;
+  if(!fecha){
+    const hoy = new Date();
+    const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    fecha = `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+  }
+  document.getElementById('letterDate').textContent = fecha;
+}
+renderLetter();
+
+/* Pétalos flotando de fondo */
+function buildPetals(){
+  const field = document.getElementById('petalField');
+  const n = 9;
+  for(let i=0;i<n;i++){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('viewBox','0 0 24 24');
+    s.classList.add('petal');
+    s.style.left = (Math.random()*94 + 2) + '%';
+    const dur = 14 + Math.random()*14;
+    const delay = Math.random()*-dur;
+    s.style.animationDuration = dur + 's';
+    s.style.animationDelay = delay + 's';
+    s.style.width = s.style.height = (14 + Math.random()*14) + 'px';
+    s.innerHTML = '<g fill="#e8a621" opacity="0.9"><ellipse cx="12" cy="5.5" rx="3" ry="4"/><ellipse cx="12" cy="18.5" rx="3" ry="4"/><ellipse cx="5.5" cy="12" rx="4" ry="3"/><ellipse cx="18.5" cy="12" rx="4" ry="3"/></g><circle cx="12" cy="12" r="2.4" fill="#c8860a"/>';
+    field.appendChild(s);
+  }
+}
+buildPetals();
+
+/* Abrir / cerrar */
+const stage = document.getElementById('stage');
+const envelopeBtn = document.getElementById('envelopeBtn');
+const closeBtn = document.getElementById('closeBtn');
+
+envelopeBtn.addEventListener('click', () => {
+  stage.classList.add('opened');
+  setTimeout(() => document.getElementById('letterCard').focus?.(), 650);
+});
+closeBtn.addEventListener('click', () => {
+  stage.classList.remove('opened');
+  envelopeBtn.focus();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && stage.classList.contains('opened')){
+    stage.classList.remove('opened');
+    envelopeBtn.focus();
+  }
+});
+</script>
+</body>
+</html>
